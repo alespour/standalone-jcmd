@@ -18,6 +18,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -99,19 +100,18 @@ func main() {
 	if len(os.Args) < 3 {
 		cmd = "help"
 	} else {
-		cmd = os.Args[2]
+		cmd = strings.Join(os.Args[2:], " ")
 	}
 
-	// TODO: Double check if one write per step is required
-	// TODO: What is the meaning here? What if there are arguments?
-	for _, s := range []string{
+	// TODO: What is the meaning here?
+	payload := strings.Join([]string{
 		"1", "\x00", "jcmd", "\x00", cmd, "\x00", "\x00", "\x00",
-	} {
-		_, err := conn.Write([]byte(s))
-		if err != nil {
-			fmt.Printf("unable to send command to Java process: %v", err)
-			os.Exit(1)
-		}
+	}, "")
+
+	_, err = conn.Write([]byte(payload))
+	if err != nil {
+		fmt.Printf("unable to send command to Java process: %v", err)
+		os.Exit(1)
 	}
 
 	_, err = io.Copy(os.Stdout, conn)
